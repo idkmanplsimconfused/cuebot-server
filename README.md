@@ -24,7 +24,11 @@ chmod +x start.sh
 ./start.sh
 ```
 
-The script will automatically create a `docker.env` file with default settings if one doesn't exist.
+The script will:
+- Check if `docker.env` exists
+- If not, prompt you to configure ports (or use defaults)
+- Create a `docker.env` file with your settings
+- Start the Docker services
 
 3. Verify the services are running:
 
@@ -44,10 +48,16 @@ Default configuration in `docker.env.example`:
   - Database: `cuebot_local`
   - Username: `cuebot`
   - Password: `changeme`
+- Ports
+  - Cuebot HTTP: 8080
+  - Cuebot HTTPS: 8443
+  - PostgreSQL: 5432
 
 ### Ports
 
-- Cuebot: 8080, 8443
+Default ports (can be configured during setup):
+- Cuebot HTTP: 8080
+- Cuebot HTTPS: 8443
 - PostgreSQL: 5432
 
 ### Data Persistence
