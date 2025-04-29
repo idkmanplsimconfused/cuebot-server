@@ -11,20 +11,22 @@ This repository contains Docker Compose configuration for running OpenCue compon
 
 ### Prerequisites
 
+- Git
 - Docker
-- Docker Compose
 
 ### Setup Instructions
 
 1. Clone this repository
-2. (Optional) Modify the `docker.env` file to customize settings
-3. Start the services:
+2. Run the start script:
 
 ```bash
-docker-compose up -d
+chmod +x start.sh
+./start.sh
 ```
 
-4. Verify the services are running:
+The script will automatically create a `docker.env` file with default settings if one doesn't exist.
+
+3. Verify the services are running:
 
 ```bash
 docker-compose ps
@@ -32,7 +34,11 @@ docker-compose ps
 
 ### Configuration
 
-The default configuration is available in the `docker.env` file:
+You can customize the environment variables by:
+- Editing the generated `docker.env` file
+- Creating your own `docker.env` based on `docker.env.example` before running the start script
+
+Default configuration in `docker.env.example`:
 
 - PostgreSQL
   - Database: `cuebot_local`
@@ -52,6 +58,12 @@ The following data is persisted using Docker volumes:
 
 ## Stopping the Services
 
+```bash
+chmod +x stop.sh
+./stop.sh
+```
+
+Alternatively, you can use:
 ```bash
 docker-compose down
 ```
