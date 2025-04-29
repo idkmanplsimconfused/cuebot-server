@@ -98,43 +98,6 @@ To completely remove the services and volumes:
 docker-compose down -v
 ```
 
-## Cleaning Up / Reset
-
-To reset your OpenCue installation and start with a fresh database:
-
-```bash
-./clean-volumes.sh
-```
-
-This script provides several options:
-
-- **Interactive Mode** (default): Displays what will be deleted and asks for confirmation
-  ```bash
-  ./clean-volumes.sh
-  ```
-
-- **Delete Everything**: Removes all volumes, downloaded files, and configuration without confirmation
-  ```bash
-  ./clean-volumes.sh --all
-  ```
-
-- **Delete Only Database**: Removes only the PostgreSQL volume to start with a fresh database
-  ```bash
-  ./clean-volumes.sh --db-only
-  ```
-
-- **Delete Only Logs**: Removes only the logs volume
-  ```bash
-  ./clean-volumes.sh --logs-only
-  ```
-
-- **Delete Only SQL Files**: Removes downloaded SQL files to force a fresh download
-  ```bash
-  ./clean-volumes.sh --files-only
-  ```
-
-After cleaning up, run `./start.sh` again to recreate everything.
-
 ## Troubleshooting
 
 If you encounter any issues with the setup:

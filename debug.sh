@@ -68,7 +68,3 @@ echo "===================================================="
 echo " "
 echo " "
 echo " "
-
-echo "============ Testing Network Connection from Cuebot to PostgreSQL ============"
-docker exec opencue-cuebot ping -c 4 postgres
-echo "========================================================================"
