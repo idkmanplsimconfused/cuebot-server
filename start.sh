@@ -22,7 +22,7 @@ if [ ! -f "docker.env" ]; then
     
     CUEBOT_HTTP_PORT=$(get_input "Cuebot HTTP Port" "8080")
     CUEBOT_HTTPS_PORT=$(get_input "Cuebot HTTPS Port" "8443")
-    POSTGRES_PORT=$(get_input "PostgreSQL Port" "5432")
+    POSTGRES_PORT=$(get_input "PostgreSQL Port (external port for host access)" "5432")
     
     # Check if postgres port is already in use
     if command -v lsof &> /dev/null && lsof -i ":$POSTGRES_PORT" &> /dev/null; then
@@ -60,26 +60,40 @@ else
     fi
 fi
 
+# Ensure CUEBOT_DB_HOST is set to 'postgres'
+if grep -q "CUEBOT_DB_HOST=" docker.env; then
+    # Platform-independent sed
+    if sed --version 2>/dev/null | grep -q GNU; then
+        # GNU sed
+        sed -i "s/CUEBOT_DB_HOST=.*/CUEBOT_DB_HOST=postgres/" docker.env
+    else
+        # BSD/macOS sed
+        sed -i '' "s/CUEBOT_DB_HOST=.*/CUEBOT_DB_HOST=postgres/" docker.env
+    fi
+fi
+
 # Debug: Print env file content
 echo "===== docker.env contents ====="
 cat docker.env
 echo "============================="
 
-# Make sure setup-db.sh is executable
-chmod +x setup-db.sh
+# Make sure all scripts are executable
+chmod +x *.sh 2>/dev/null || true
 
 # Start OpenCue services
 echo "Starting OpenCue services..."
 set -a
 source docker.env
 set +a
+
+# Force a clean start
 docker-compose down
 docker-compose up -d postgres
 
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
-    if docker exec opencue-postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" &> /dev/null; then
+    if docker-compose exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" &> /dev/null; then
         echo "PostgreSQL is ready!"
         break
     fi
@@ -96,7 +110,21 @@ read -p "Do you want to initialize/setup the database schema? (y/n) [y]: " init_
 init_db=${init_db:-y}
 
 if [[ $init_db == "y" || $init_db == "Y" ]]; then
-    ./setup-db.sh
+    # Download schema if needed
+    if [ ! -f "create_db.sql" ]; then
+        echo "Downloading database schema..."
+        curl -o create_db.sql https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenCue/master/cuebot/src/main/resources/conf/ddl/postgres/create_db.sql
+    fi
+    
+    # Apply schema
+    echo "Applying database schema..."
+    cat create_db.sql | docker-compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+    
+    if [ $? -eq 0 ]; then
+        echo "Database initialized successfully!"
+    else
+        echo "Database initialization failed!"
+    fi
 fi
 
 # Start Cuebot
@@ -114,9 +142,11 @@ docker-compose ps
 echo "OpenCue is now available at:"
 echo "- Cuebot HTTP: http://localhost:$CUEBOT_HTTP_PORT"
 echo "- Cuebot HTTPS: https://localhost:$CUEBOT_HTTPS_PORT"
+echo "- PostgreSQL: localhost:$POSTGRES_PORT (external port)"
 
 echo ""
 echo "To stop the services, run: ./stop.sh or docker-compose down"
+echo "To check for connectivity issues, run: ./debug.sh"
 
 # Clean up any temp files if script exits early
 trap "rm -f $TEMP_ENV_FILE" EXIT 
