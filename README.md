@@ -48,17 +48,10 @@ Default configuration in `docker.env.example`:
   - Database: `cuebot_local`
   - Username: `cuebot`
   - Password: `changeme`
-- Ports
+- Ports (can be configured during setup)
   - Cuebot HTTP: 8080
   - Cuebot HTTPS: 8443
   - PostgreSQL: 5432
-
-### Ports
-
-Default ports (can be configured during setup):
-- Cuebot HTTP: 8080
-- Cuebot HTTPS: 8443
-- PostgreSQL: 5432
 
 ### Data Persistence
 
