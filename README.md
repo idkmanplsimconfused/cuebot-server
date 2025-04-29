@@ -20,7 +20,7 @@ This repository contains Docker Compose configuration for running OpenCue compon
 2. Run the start script:
 
 ```bash
-chmod +x start.sh
+chmod +x start.sh setup-db.sh stop.sh
 ./start.sh
 ```
 
@@ -28,13 +28,27 @@ The script will:
 - Check if `docker.env` exists
 - If not, prompt you to configure ports (or use defaults)
 - Create a `docker.env` file with your settings
-- Start the Docker services
+- Start the PostgreSQL service
+- Ask if you want to initialize the database schema (recommended for first-time setup)
+- Start the Cuebot service
 
 3. Verify the services are running:
 
 ```bash
 docker-compose ps
 ```
+
+### Database Setup
+
+The first time you run the system, you need to initialize the database schema. The start script will ask if you want to do this automatically. If you need to do it separately, you can run:
+
+```bash
+./setup-db.sh
+```
+
+This will:
+1. Download the OpenCue database schema
+2. Apply it to your PostgreSQL instance
 
 ### Configuration
 
@@ -48,10 +62,17 @@ Default configuration in `docker.env.example`:
   - Database: `cuebot_local`
   - Username: `cuebot`
   - Password: `changeme`
-- Ports (can be configured during setup)
+- Ports
   - Cuebot HTTP: 8080
   - Cuebot HTTPS: 8443
   - PostgreSQL: 5432
+
+### Ports
+
+Default ports (can be configured during setup):
+- Cuebot HTTP: 8080
+- Cuebot HTTPS: 8443
+- PostgreSQL: 5432
 
 ### Data Persistence
 
@@ -62,7 +83,6 @@ The following data is persisted using Docker volumes:
 ## Stopping the Services
 
 ```bash
-chmod +x stop.sh
 ./stop.sh
 ```
 
@@ -74,4 +94,41 @@ docker-compose down
 To completely remove the services and volumes:
 ```bash
 docker-compose down -v
-``` 
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If Cuebot can't connect to PostgreSQL:
+
+1. Make sure the PostgreSQL container is running:
+   ```bash
+   docker ps | grep postgres
+   ```
+
+2. Check PostgreSQL logs:
+   ```bash
+   docker logs opencue-postgres
+   ```
+
+3. Check Cuebot logs:
+   ```bash
+   docker logs opencue-cuebot
+   ```
+
+4. Verify the database schema has been initialized:
+   ```bash
+   ./setup-db.sh
+   ```
+
+### Port Conflicts
+
+If you see "address already in use" errors, you can:
+
+1. Use different ports when prompted during setup
+2. Manually edit the `docker.env` file to change ports
+3. Stop any running instances of PostgreSQL:
+   ```bash
+   sudo systemctl stop postgresql
+   ``` 

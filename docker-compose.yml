@@ -12,6 +12,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - opencue-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -31,11 +33,17 @@ services:
       - "${CUEBOT_HTTPS_PORT:-8443}:8443"
     volumes:
       - opencue_logs:/opencue/logs
+    networks:
+      - opencue-network
     command: >
       --datasource.cue-data-source.jdbc-url=jdbc:postgresql://${CUEBOT_DB_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       --datasource.cue-data-source.username=${POSTGRES_USER}
       --datasource.cue-data-source.password=${POSTGRES_PASSWORD}
       --log.frame-log-root.default_os=/opencue/logs
+
+networks:
+  opencue-network:
+    driver: bridge
 
 volumes:
   postgres_data:
