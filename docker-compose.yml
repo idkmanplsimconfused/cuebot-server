@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: opencue-postgres
+    env_file:
+      - docker.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cuebot:
+    image: opencue/cuebot
+    container_name: opencue-cuebot
+    env_file:
+      - docker.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - opencue_logs:/opencue/logs
+    command: >
+      --datasource.cue-data-source.jdbc-url=jdbc:postgresql://${CUEBOT_DB_HOST}:${CUEBOT_DB_PORT}/${POSTGRES_DB}
+      --datasource.cue-data-source.username=${POSTGRES_USER}
+      --datasource.cue-data-source.password=${POSTGRES_PASSWORD}
+      --log.frame-log-root.default_os=/opencue/logs
+
+volumes:
+  postgres_data:
+  opencue_logs: 
