@@ -20,7 +20,7 @@ This repository contains Docker Compose configuration for running OpenCue compon
 2. Run the start script:
 
 ```bash
-chmod +x start.sh setup-db.sh stop.sh
+chmod +x start.sh setup-db.sh stop.sh debug.sh fix-connection.sh
 ./start.sh
 ```
 
@@ -29,7 +29,7 @@ The script will:
 - If not, prompt you to configure ports (or use defaults)
 - Create a `docker.env` file with your settings
 - Start the PostgreSQL service
-- Ask if you want to initialize the database schema (recommended for first-time setup)
+- Ask if you want to initialize the database schema and seed data (recommended for first-time setup)
 - Start the Cuebot service
 
 3. Verify the services are running:
@@ -40,15 +40,17 @@ docker-compose ps
 
 ### Database Setup
 
-The first time you run the system, you need to initialize the database schema. The start script will ask if you want to do this automatically. If you need to do it separately, you can run:
+The first time you run the system, you need to initialize the database schema and seed data. The start script will ask if you want to do this automatically. If you need to do it separately, you can run:
 
 ```bash
 ./setup-db.sh
 ```
 
 This will:
-1. Download the OpenCue database schema
-2. Apply it to your PostgreSQL instance
+1. Download the official OpenCue schema (v1.4.11) from GitHub releases
+2. Download the official seed data (v1.4.11) from GitHub releases
+3. Apply both to your PostgreSQL instance
+4. Create a test show and other necessary initial data
 
 ### Configuration
 
@@ -98,6 +100,18 @@ docker-compose down -v
 
 ## Troubleshooting
 
+If you encounter any issues with the setup:
+
+```bash
+./fix-connection.sh
+```
+
+This script will:
+1. Stop all services
+2. Reset your docker.env to default values
+3. Restart services in the correct order
+4. Reinitialize the database if requested
+
 ### Connection Issues
 
 If Cuebot can't connect to PostgreSQL:
@@ -117,9 +131,9 @@ If Cuebot can't connect to PostgreSQL:
    docker logs opencue-cuebot
    ```
 
-4. Verify the database schema has been initialized:
+4. Run the debug script to diagnose issues:
    ```bash
-   ./setup-db.sh
+   ./debug.sh
    ```
 
 ### Port Conflicts

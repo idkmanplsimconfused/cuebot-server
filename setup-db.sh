@@ -10,12 +10,12 @@ else
     exit 1
 fi
 
-echo "Setting up the OpenCue database schema..."
+echo "Setting up the OpenCue database schema and seed data..."
 
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
-    if docker exec opencue-postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+    if docker-compose exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
         echo "PostgreSQL is ready!"
         break
     fi
@@ -27,24 +27,57 @@ for i in {1..30}; do
     fi
 done
 
-# Download the schema
-if [ ! -f "create_db.sql" ]; then
-    echo "Downloading database schema..."
-    curl -o create_db.sql https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenCue/master/cuebot/src/main/resources/conf/ddl/postgres/create_db.sql
+# Download the schema and seed data files from GitHub release
+SCHEMA_URL="https://github.com/AcademySoftwareFoundation/OpenCue/releases/download/v1.4.11/schema-1.4.11.sql"
+SEED_DATA_URL="https://github.com/AcademySoftwareFoundation/OpenCue/releases/download/v1.4.11/seed_data-1.4.11.sql"
+SCHEMA_FILE="schema-1.4.11.sql"
+SEED_DATA_FILE="seed_data-1.4.11.sql"
+
+echo "Downloading schema file from $SCHEMA_URL..."
+if [ ! -f "$SCHEMA_FILE" ]; then
+    curl -L -o "$SCHEMA_FILE" "$SCHEMA_URL"
     if [ $? -ne 0 ]; then
-        echo "Failed to download schema. Please check your internet connection."
+        echo "Failed to download schema file. Please check your internet connection."
         exit 1
     fi
+    echo "Schema file downloaded successfully."
+else
+    echo "Schema file already exists, using the existing file."
+fi
+
+echo "Downloading seed data file from $SEED_DATA_URL..."
+if [ ! -f "$SEED_DATA_FILE" ]; then
+    curl -L -o "$SEED_DATA_FILE" "$SEED_DATA_URL"
+    if [ $? -ne 0 ]; then
+        echo "Failed to download seed data file. Please check your internet connection."
+        exit 1
+    fi
+    echo "Seed data file downloaded successfully."
+else
+    echo "Seed data file already exists, using the existing file."
 fi
 
 # Apply the schema
 echo "Applying database schema..."
-cat create_db.sql | docker exec -i opencue-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+cat "$SCHEMA_FILE" | docker-compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 
 if [ $? -eq 0 ]; then
-    echo "Database setup complete!"
-    echo "OpenCue is now ready to use."
+    echo "Database schema applied successfully!"
 else
     echo "Failed to apply database schema. Please check the logs."
     exit 1
-fi 
+fi
+
+# Apply the seed data
+echo "Applying seed data..."
+cat "$SEED_DATA_FILE" | docker-compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
+if [ $? -eq 0 ]; then
+    echo "Seed data applied successfully!"
+else
+    echo "Failed to apply seed data. Please check the logs."
+    exit 1
+fi
+
+echo "Database setup completed successfully!"
+echo "OpenCue is now ready to use with initial test data." 

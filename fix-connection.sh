@@ -46,7 +46,7 @@ docker-compose up -d postgres
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
-    if docker-compose exec postgres pg_isready -U cuebot -d cuebot_local &> /dev/null; then
+    if docker-compose exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" &> /dev/null; then
         echo "PostgreSQL is ready!"
         break
     fi
@@ -59,23 +59,14 @@ for i in {1..30}; do
 done
 
 # Initialize database if needed
-read -p "Do you want to initialize the database schema? (y/n) [y]: " init_db
+read -p "Do you want to initialize the database with schema and seed data? (y/n) [y]: " init_db
 init_db=${init_db:-y}
 
 if [[ $init_db == "y" || $init_db == "Y" ]]; then
-    # Download schema if needed
-    if [ ! -f "create_db.sql" ]; then
-        echo "Downloading database schema..."
-        curl -o create_db.sql https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenCue/master/cuebot/src/main/resources/conf/ddl/postgres/create_db.sql
-    fi
+    # Run the setup-db.sh script
+    ./setup-db.sh
     
-    # Apply schema
-    echo "Applying database schema..."
-    cat create_db.sql | docker-compose exec -T postgres psql -U cuebot -d cuebot_local
-    
-    if [ $? -eq 0 ]; then
-        echo "Database initialized successfully!"
-    else
+    if [ $? -ne 0 ]; then
         echo "Database initialization failed!"
         exit 1
     fi

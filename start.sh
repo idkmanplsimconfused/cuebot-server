@@ -106,25 +106,12 @@ for i in {1..30}; do
 done
 
 # Ask the user if they want to setup/initialize the database
-read -p "Do you want to initialize/setup the database schema? (y/n) [y]: " init_db
+read -p "Do you want to initialize the database with schema and seed data? (y/n) [y]: " init_db
 init_db=${init_db:-y}
 
 if [[ $init_db == "y" || $init_db == "Y" ]]; then
-    # Download schema if needed
-    if [ ! -f "create_db.sql" ]; then
-        echo "Downloading database schema..."
-        curl -o create_db.sql https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenCue/master/cuebot/src/main/resources/conf/ddl/postgres/create_db.sql
-    fi
-    
-    # Apply schema
-    echo "Applying database schema..."
-    cat create_db.sql | docker-compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
-    
-    if [ $? -eq 0 ]; then
-        echo "Database initialized successfully!"
-    else
-        echo "Database initialization failed!"
-    fi
+    # Call the setup-db.sh script
+    ./setup-db.sh
 fi
 
 # Start Cuebot
