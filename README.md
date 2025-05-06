@@ -21,7 +21,7 @@ This repository contains Docker Compose configuration for running OpenCue compon
 
 ```bash
 chmod +x *.sh
-./start.sh
+./start-cuebot.sh
 ```
 
 The script will:
@@ -85,7 +85,7 @@ The following data is persisted using Docker volumes:
 ## Stopping the Services
 
 ```bash
-./stop.sh
+./stop-cuebot.sh
 ```
 
 Alternatively, you can use:
